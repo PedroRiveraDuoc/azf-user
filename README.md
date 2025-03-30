@@ -78,8 +78,8 @@ mvn azure-functions:deploy
 
 Las funciones estarán disponibles en:
 ```
-https://<tu-funcion>.azurewebsites.net/api/CreateUser
-https://<tu-funcion>.azurewebsites.net/api/AssignRole
+https://azf-createuser.azurewebsites.net/api/CreateUser?
+https://azf-createuser.azurewebsites.net/api/AssignRole?
 ```
 
 ## 🧾 Dependencias clave
