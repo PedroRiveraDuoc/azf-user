@@ -104,18 +104,7 @@ https://azf-createuser.azurewebsites.net/api/AssignRole?
 ✅ Uso de GIT y control de versiones  
 ✅ Docker y Azure listos para despliegue
 
-## 👨‍🏫 Proyecto para evaluación de la Semana 3 (DSY2207)
+Diagrama
 
-> Este desarrollo corresponde a la Actividad Sumativa N°1 del ramo *Desarrollo Cloud Native II*, Semana 3. El sistema será presentado en un video demostrativo en conjunto con el código fuente.
+![Diagrama_Sumativa1](https://github.com/user-attachments/assets/068093b1-3398-46f3-85b3-a23dbed93e2c)
 
----
-
-## 🎥 Video de presentación
-
-🔗 [Pega aquí el enlace de la grabación de Teams]
-
-## 🔗 Repositorio del proyecto
-
-🔗 https://github.com/PedroRiveraDuoc/azf-user.git
-
----
