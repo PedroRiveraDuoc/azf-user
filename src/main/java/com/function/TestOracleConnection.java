@@ -1,5 +1,6 @@
 package com.function;
 
+import com.function.infraestructure.db.OracleDBConnection;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
 /**
  * Azure Function que prueba conexión a Oracle utilizando Wallet.
  */
-public class Function {
+public class TestOracleConnection {
 
     @FunctionName("testOracleConnection")
     public HttpResponseMessage run(

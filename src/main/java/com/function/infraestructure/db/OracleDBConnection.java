@@ -1,4 +1,4 @@
-package com.function;
+package com.function.infraestructure.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
