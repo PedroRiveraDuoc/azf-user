@@ -6,7 +6,6 @@ import com.infrastructure.eventgrid.EventGridPublisherImpl;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 
-import java.util.UUID;
 
 public class PublishEventFunction {
 
