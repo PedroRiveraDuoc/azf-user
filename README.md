@@ -1,41 +1,69 @@
-# Sistema de Gestión de Usuarios y Roles – Arquitectura Serverless con Azure Functions
+# Sistema de Gestión de Usuarios y Auditoría – Azure Functions + Oracle
 
-Este proyecto corresponde al desarrollo de un sistema backend utilizando arquitectura **Serverless** con **Azure Functions en Java**, conectado a una base de datos **Oracle con Wallet**, en el contexto del ramo **Desarrollo Cloud Native II (DSY2207)**.
+Este proyecto implementa un backend **serverless** en **Java** sobre **Azure Functions**, con persistencia en **Oracle** (usando Wallet) y auditoría de eventos siguiendo **Clean Architecture**.
 
-## 🧠 Objetivo del proyecto
+---
 
-Implementar un sistema de backend desacoplado que permita realizar operaciones básicas de gestión de usuarios y asignación de roles mediante funciones **serverless** desarrolladas en **Java**, cumpliendo con los principios de arquitectura moderna y buenas prácticas cloud.
+## 🚀 Características principales
+
+- **CRUD de usuarios**: Crear, actualizar, eliminar y consultar usuarios.
+- **Auditoría de eventos**: Cada operación relevante genera un evento y se persiste en la tabla `eventos_auditoria` de Oracle.
+- **Publicación de eventos**: Los eventos se publican en Azure Event Grid para integración y trazabilidad.
+- **Arquitectura limpia**: Separación clara de capas (dominio, aplicación, infraestructura, función).
+- **Conexión segura**: Uso de Oracle Wallet y variables de entorno para credenciales.
+
+---
 
 ## 📁 Estructura del proyecto
 
-```bash
+```
 azf-user/
 ├── src/
 │   └── main/
 │       └── java/com/function/
-│           ├── CreateUserFunction.java
-│           ├── AssignRoleFunction.java
-│           ├── Function.java (test conexión)
-│           ├── OracleDBConnection.java
-│           └── HttpResponseMessageMock.java (para testing)
-├── local.settings.json
+│           ├── application/usecase/      # Casos de uso (lógica de negocio)
+│           ├── domain/model/             # Modelos de dominio y eventos
+│           ├── infrastructure/           # Repositorios, EventGrid, etc.
+│           ├── function/                 # Azure Functions (entrypoints)
+│           └── util/                     # Utilidades y mappers
+├── wallet/                               # Archivos Oracle Wallet
+├── local.settings.json                    # Configuración local y secrets
 ├── pom.xml
-└── wallet/ (carpeta con archivos del Oracle Wallet)
+└── README.md
 ```
 
-## ⚙️ Funcionalidades
+---
 
-Este sistema implementa las siguientes funciones serverless:
+## ⚙️ Funcionalidades Serverless
 
-| Función           | Método | Descripción                                      |
-|------------------|--------|--------------------------------------------------|
-| `CreateUser`     | POST   | Crea un usuario nuevo en la tabla `usuarios`     |
-| `AssignRole`     | POST   | Asigna un rol a un usuario (`usuario_roles`)     |
-| `testOracleConnection` | GET    | Verifica conectividad con Oracle vía Wallet      |
+| Función                  | Método | Descripción                                                        |
+|--------------------------|--------|--------------------------------------------------------------------|
+| `CreateUser`             | POST   | Crea un usuario y audita la operación                              |
+| `UpdateUser`             | PUT    | Actualiza un usuario y audita la operación                         |
+| `DeleteUser`             | DELETE | Elimina un usuario y audita la operación                           |
+| `GetUserById`            | GET    | Consulta un usuario por ID                                         |
+| `GetAllUsers`            | GET    | Lista todos los usuarios                                           |
+| `ProcessEventGridEvent`  | Event  | Persiste en auditoría cada evento recibido desde Event Grid        |
+| `testOracleConnection`   | GET    | Prueba la conectividad a Oracle usando Wallet                      |
 
-## 🧪 Pruebas locales
+---
 
-1. Configura las variables en `local.settings.json`:
+## 🧾 Auditoría de eventos
+
+Cada vez que se realiza una operación CRUD relevante, se genera un evento con un tipo explícito (`user.created`, `user.updated`, `user.deleted`, `user.queried`) y se persiste en la tabla `eventos_auditoria` de Oracle:
+
+| Campo         | Descripción                                 |
+|---------------|---------------------------------------------|
+| id_evento     | UUID del evento                             |
+| tipo_evento   | Tipo de operación (`user.created`, etc.)    |
+| fecha_evento  | Fecha y hora del evento (TIMESTAMP)         |
+| datos         | Datos relevantes del evento (JSON)          |
+
+---
+
+## 🛠️ Configuración y ejecución local
+
+1. **Configura las variables en `local.settings.json`:**
 
 ```json
 {
@@ -45,77 +73,74 @@ Este sistema implementa las siguientes funciones serverless:
     "ORACLE_USER": "back_vet",
     "ORACLE_PASSWORD": "**********",
     "ORACLE_TNS_NAME": "**********",
-    "ORACLE_WALLET_PATH": "C:/ruta/completa/al/wallet"
+    "ORACLE_WALLET_PATH": "C:/ruta/completa/al/wallet",
+    "EVENT_GRID_TOPIC_ENDPOINT": "...",
+    "EVENT_GRID_TOPIC_KEY": "..."
   }
 }
 ```
 
-2. Ejecuta el siguiente comando:
+2. **Compila y ejecuta localmente:**
 
 ```bash
 mvn clean package
 mvn azure-functions:run
 ```
 
-3. Prueba con Postman:
+3. **Prueba las funciones con Postman o curl:**
 
-- **POST /api/CreateUser**  
-  Cuerpo: `Juan Perez,juan@email.com`
-
-- **POST /api/AssignRole**  
-  Query: `?userId=1&rolId=2` o Cuerpo: `1,2`
-
+- **POST /api/CreateUser**
+- **PUT /api/UpdateUser/{id}**
+- **DELETE /api/DeleteUser/{id}**
+- **GET /api/GetUserById/{id}**
+- **GET /api/GetAllUsers**
 - **GET /api/testOracleConnection**
-
-## ☁️ Despliegue en Azure
-
-El despliegue se realiza con el plugin de Maven incluido en el `pom.xml`. Ejecuta:
-
-```bash
-az login
-mvn azure-functions:deploy
-```
-
-Las funciones estarán disponibles en:
-```
-https://<tu-funcion>.azurewebsites.net/api/CreateUser
-https://<tu-funcion>.azurewebsites.net/api/AssignRole
-```
-
-## 🧾 Dependencias clave
-
-- `azure-functions-java-library`
-- `ojdbc11`, `oraclepki`, `osdt_core`, `osdt_cert`
-- `JUnit` y `Mockito` para pruebas
-
-## 🧰 Buenas prácticas aplicadas
-
-- Uso de variables de entorno seguras para conexión.
-- Conexión a Oracle mediante Wallet.
-- Funciones pequeñas, especializadas y sin estado (`stateless`).
-- Pruebas de conexión y logs claros para observabilidad.
-- Organización modular por responsabilidades.
-
-## 🎓 Requisitos cumplidos según pauta de evaluación
-
-✅ Mínimo 2 funciones serverless implementadas  
-✅ Microservicio con lógica desacoplada y pruebas exitosas  
-✅ Conexión a Oracle con wallet correctamente configurada  
-✅ Uso de GIT y control de versiones  
-✅ Docker y Azure listos para despliegue
-
-## 👨‍🏫 Proyecto para evaluación de la Semana 3 (DSY2207)
-
-> Este desarrollo corresponde a la Actividad Sumativa N°1 del ramo *Desarrollo Cloud Native II*, Semana 3. El sistema será presentado en un video demostrativo en conjunto con el código fuente.
 
 ---
 
-## 🎥 Video de presentación
+## ☁️ Despliegue en Azure
 
-🔗 [Pega aquí el enlace de la grabación de Teams]
+1. Inicia sesión en Azure:
+   ```bash
+   az login
+   ```
+2. Despliega con Maven:
+   ```bash
+   mvn azure-functions:deploy
+   ```
 
-## 🔗 Repositorio del proyecto
+---
 
-🔗 https://github.com/PedroRiveraDuoc/azf-user.git
+## 🧰 Principales dependencias
+
+- `azure-functions-java-library`
+- `azure-messaging-eventgrid`
+- `ojdbc11` y librerías Oracle Wallet
+- `JUnit` y `Mockito` para pruebas
+
+---
+
+## 🏆 Buenas prácticas y arquitectura
+
+- **Clean Architecture**: Separación de dominio, aplicación, infraestructura y función.
+- **Logs claros y profesionales**: Solo logs clave para monitoreo y troubleshooting.
+- **Variables de entorno**: Seguridad y portabilidad.
+- **Documentación y comentarios Javadoc** en todo el código relevante.
+- **Pruebas unitarias y de integración**.
+
+---
+
+## 📚 Recursos útiles
+
+- [Documentación Azure Functions Java](https://learn.microsoft.com/es-es/azure/azure-functions/functions-reference-java)
+- [Documentación Oracle Wallet](https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdev/using-oracle-wallets.html)
+- [Event Grid Java SDK](https://learn.microsoft.com/en-us/java/api/overview/azure/messaging-eventgrid-readme?view=azure-java-stable)
+
+---
+
+## 👨‍💻 Autor y contacto
+
+Pedro Rivera  
+[GitHub: PedroRiveraDuoc](https://github.com/PedroRiveraDuoc/azf-user.git)
 
 ---
