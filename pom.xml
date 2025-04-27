@@ -25,6 +25,13 @@
             <artifactId>azure-functions-java-library</artifactId>
             <version>${azure.functions.java.library.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-eventgrid</artifactId>
+            <version>4.22.2</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -72,6 +79,18 @@
             <artifactId>gson</artifactId>
             <version>2.10.1</version> <!-- Asegúrate de usar la última versión disponible -->
         </dependency>
+
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+            <version>20.0</version>
+        </dependency>
+
+
+
+
+
+
 
     </dependencies>
 

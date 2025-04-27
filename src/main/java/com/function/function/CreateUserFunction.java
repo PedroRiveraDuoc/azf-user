@@ -15,16 +15,20 @@ public class CreateUserFunction {
     public HttpResponseMessage run(
             @HttpTrigger(name = "req", methods = {
                     HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+                    
             final ExecutionContext context) {
 
         context.getLogger().info("Ejecutando función: CreateUser");
 
         try {
             String body = request.getBody().orElse("");
+            context.getLogger().info("[CreateUser] Body recibido: " + body);
             User user = UserMapper.fromJson(body);
 
             CreateUserUseCase useCase = new CreateUserUseCase(new UserRepositoryImpl());
             boolean created = useCase.execute(user);
+
+            context.getLogger().info("[CreateUser] Resultado creación: " + created);
 
             if (created) {
                 return request.createResponseBuilder(HttpStatus.OK)
@@ -39,6 +43,7 @@ public class CreateUserFunction {
             }
 
         } catch (Exception e) {
+            context.getLogger().severe("[CreateUser] Error: " + e.getMessage());
             return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
                     .body("{\"error\":\"Entrada inválida: " + e.getMessage() + "\"}")
                     .header("Content-Type", "application/json")
