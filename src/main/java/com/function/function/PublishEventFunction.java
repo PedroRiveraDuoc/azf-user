@@ -1,12 +1,11 @@
 package com.function.function;
 
-import com.application.usecase.PublishDomainEventUseCase;
-import com.domain.model.DomainEvent;
+import com.function.application.usecase.PublishDomainEventUseCase;
+import com.function.domain.model.DomainEvent;
 import com.infrastructure.eventgrid.EventGridPublisherImpl;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class PublishEventFunction {
@@ -31,9 +30,7 @@ public class PublishEventFunction {
         String body = request.getBody();
         context.getLogger().info("[PublishEvent] Body recibido: " + body);
         DomainEvent ev = new DomainEvent(
-                UUID.randomUUID().toString(),
                 "duoc.user.customEvent",
-                OffsetDateTime.now(),
                 body
         );
 

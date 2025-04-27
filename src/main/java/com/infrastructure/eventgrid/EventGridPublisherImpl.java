@@ -5,7 +5,7 @@ import com.azure.core.util.BinaryData;
 import com.azure.messaging.eventgrid.EventGridEvent;
 import com.azure.messaging.eventgrid.EventGridPublisherClient;
 import com.azure.messaging.eventgrid.EventGridPublisherClientBuilder;
-import com.domain.model.DomainEvent;
+import com.function.domain.model.DomainEvent;
 
 public class EventGridPublisherImpl implements EventGridPublisher {
 
@@ -21,8 +21,8 @@ public class EventGridPublisherImpl implements EventGridPublisher {
     @Override
     public void publish(DomainEvent event) {
         EventGridEvent gridEvent = new EventGridEvent(
-            event.getEventType(),
-            "com.domain.model.DomainEvent",
+            event.getType(),
+            "com.function.domain.model.DomainEvent",
             BinaryData.fromObject(event.getData()),
             "1.0"
         );

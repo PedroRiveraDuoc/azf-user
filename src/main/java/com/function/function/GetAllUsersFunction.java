@@ -1,32 +1,50 @@
 package com.function.function;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.function.application.usecase.GetUserUseCase;
+import com.function.application.usecase.PublishDomainEventUseCase;
+import com.function.domain.model.User;
+import com.function.infraestructure.repository.UserRepository;
 import com.function.infraestructure.db.UserRepositoryImpl;
-import com.function.util.mapper.UserMapper;
+import com.infrastructure.eventgrid.EventGridPublisherImpl;
+
+import java.util.List;
+import java.util.Optional;
 
 public class GetAllUsersFunction {
 
     @FunctionName("GetAllUsers")
     public HttpResponseMessage run(
-            @HttpTrigger(name = "req", methods = { HttpMethod.GET }, authLevel = AuthorizationLevel.ANONYMOUS, route = "users") HttpRequestMessage<Void> request,
+            @HttpTrigger(name = "req", methods = {
+                    HttpMethod.GET }, authLevel = AuthorizationLevel.ANONYMOUS, route = "users") HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
 
         context.getLogger().info("Ejecutando función: GetAllUsers");
 
-        GetUserUseCase useCase = new GetUserUseCase(new UserRepositoryImpl());
-
         try {
-            var usuarios = useCase.getAll();
+            UserRepository repository = new UserRepositoryImpl();
+            String endpoint = System.getenv("EVENT_GRID_TOPIC_ENDPOINT");
+            String key = System.getenv("EVENT_GRID_TOPIC_KEY");
+            EventGridPublisherImpl publisher = new EventGridPublisherImpl(endpoint, key);
+            GetUserUseCase useCase = new GetUserUseCase(
+                repository,
+                new PublishDomainEventUseCase(publisher)
+            );
+
+            List<User> users = useCase.findAll();
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonResponse = mapper.writeValueAsString(users);
+
             return request.createResponseBuilder(HttpStatus.OK)
-                    .body(UserMapper.toJson(usuarios))
+                    .body(jsonResponse)
                     .header("Content-Type", "application/json")
                     .build();
         } catch (Exception e) {
             context.getLogger().severe("Error al obtener usuarios: " + e.getMessage());
             return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("{\"error\":\"Error al obtener usuarios\"}")
+                    .body("{\"mensaje\":\"Error interno del servidor\"}")
                     .header("Content-Type", "application/json")
                     .build();
         }
